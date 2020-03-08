@@ -7,3 +7,14 @@ services:
       - ./:/app:delegated
     ports:
       - '8000:80'
+
+  mysql:
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      - MYSQL_ROOT_PASSWORD=Ilia_24998
+      - MYSQL_DATABASE=lena_server
+      - MYSQL_USER=lena
+      - MYSQL_PASSWORD=secret
+    ports:
+      - "3308:3306"
