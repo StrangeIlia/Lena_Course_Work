@@ -4,6 +4,7 @@ namespace app\models;
 
 use Yii;
 use yii\base\Exception;
+use yii\db\ActiveQuery;
 use yii\web\IdentityInterface;
 
 /**
@@ -18,7 +19,7 @@ use yii\web\IdentityInterface;
  * @property string $created_at
  * @property string $updated_at
  *
- * @property Baskets[] $baskets
+ * @property Basket[] $baskets
  */
 class User extends BaseActiveRecord implements IdentityInterface
 {
@@ -65,11 +66,11 @@ class User extends BaseActiveRecord implements IdentityInterface
     /**
      * Gets query for [[Baskets]].
      *
-     * @return Baskets array
+     * @return ActiveQuery
      */
     public function getBaskets()
     {
-        return $this->hasMany(Baskets::className(), ['user_id' => 'id']);
+        return $this->hasMany(Basket::className(), ['user_id' => 'id']);
     }
 
     /**

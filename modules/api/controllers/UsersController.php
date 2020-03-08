@@ -15,7 +15,7 @@ class UsersController extends BaseController
     {
         $behaviors = parent::behaviors();
 
-        $behaviors['bearerAuth']['except'] = ['registration'];
+        $behaviors['bearerAuth']['optional'] = ['registration', 'login', 'username'];
 
         $behaviors['access'] = [
             'class' => AccessControl::className(),
@@ -23,10 +23,10 @@ class UsersController extends BaseController
                 [
                     'actions' => ['registration', 'login', 'username'],
                     'allow' => true,
-                    'roles' => ['?', '@'],
+                    'roles' => ['@', '?'],
                 ],
                 [
-                    'actions' => ['logout'],
+                    'actions' => ['logout', 'refill'],
                     'allow' => true,
                     'roles' => ['@'],
                 ],
@@ -38,9 +38,10 @@ class UsersController extends BaseController
 
     public function actionRegistration()
     {
-        $user = new User();
+        $user = new LoginForm();
         if ($user->load(Yii::$app->request->post(), '')) {
-            if ($user->save()) {
+            $user->score = 0;
+            if ($user->save(false)) {
                 return [
                     'access_token' => $user->access_token,
                 ];
@@ -70,15 +71,16 @@ class UsersController extends BaseController
 
     public function actionLogin($username, $password)
     {
-        $model = new LoginForm();
-        $user = User::findOne($username);
-        if ($model->load(Yii::$app->request->post(), '') && $model->login()) {
-            return ['access_token' => $model->getUser()['access_token']];
+        $user = User::findOne(['username' => $username]);
+        if ($user !== null && $user->validatePassword($password)) {
+            $user->generateAccessToken();
+            $user->save();
+            return ['access_token' => $user->access_token];
         }
         return ['error' => 'Неверный логин или пароль'];
     }
 
-    public function actionUsername($id)
+    public function actionUsername($id = null)
     {
         $user = null;
         if ($id === null)
@@ -94,6 +96,17 @@ class UsersController extends BaseController
 
     public function actionLogout()
     {
+        Yii::$app->user->identity->generateAccessToken();
+        Yii::$app->user->identity->save();
         Yii::$app->user->logout();
+    }
+
+    /*
+     * Пополнение счета
+     */
+    public function actionRefill($score)
+    {
+        Yii::$app->user->identity->score += $score;
+        Yii::$app->user->identity->save();
     }
 }

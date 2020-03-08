@@ -39,8 +39,14 @@ class BasketsController extends BaseController
             if (count($phones) !== 0) {
                 $cost = 0;
                 foreach ($phones as $phone) {
-                    if ($phone->count > 0)
-                        $cost += $phone->cost;
+                    $purchase_phone = Phone::findOne($phone->id);
+                    if ($purchase_phone->count >= $phone->count)
+                        $cost += $phone->cost * $phone->count;
+                    else
+                        return [
+                            'result' => 'Недостаточно телефонов следущего типа ' . $phone->mark .
+                                '. Требуется ' . $phone->count . ', имеется ' . $purchase_phone->count
+                        ];
                 }
                 if ($user->score < $cost)
                     return ['result' => 'Не достаточно денег на счету'];
@@ -48,10 +54,9 @@ class BasketsController extends BaseController
                 $user->score -= $cost;
                 $user->save(false);
                 foreach ($phones as $phone) {
-                    if ($phone->count > 0) {
-                        $phone->count -= 1;
-                        $phone->save(false);
-                    }
+                    $purchase_phone = Phone::findOne($phone->id);
+                    $purchase_phone->count -= 1;
+                    $purchase_phone->save(false);
                 }
             }
             $basket->delete();
@@ -62,48 +67,54 @@ class BasketsController extends BaseController
     private function createBasket()
     {
         $basket = $this->getBasket();
-        if ($basket === null)
-            return new Basket();
-        else
-            return $basket;
+        if ($basket === null) {
+            $basket = new Basket();
+            $basket->user_id = Yii::$app->user->identity->getId();
+        }
+        return $basket;
     }
 
     private function getBasket()
     {
         $user = Yii::$app->user->identity;
-        $baskets = $user->getBaskets();
-        if (count($baskets) !== 0)
-            return $baskets[0];
-        return null;
+        return $user->getBaskets()->one();
     }
 
-    public function actionAppend_Phone($id)
+    public function actionAppend_phone($id)
     {
         $basket = $this->createBasket();
         $phone = Phone::findOne($id);
         if ($phone !== null) {
-            $basket->save();
+
+            $basket->save(false);
             $phone_basket = new PhoneBasket();
             $phone_basket->phone_id = $id;
             $phone_basket->basket_id = $basket->id;
-            $phone_basket->save();
+            $phone_basket->save(false);
+            return ['result' => 'Заказ успешно добавлен в корзину'];
         }
+        return ['result' => 'Нет телефона с таким id'];
     }
 
-    public function actionRemove_Phone($id)
+    public function actionRemove_phone($id)
     {
         $basket = $this->getBasket();
         if ($basket !== null) {
             $phone_basket = $basket->getPhoneBasket($id);
             if ($phone_basket !== null)
                 $phone_basket->delete();
+            else
+                return ['result' => 'Нет телефона с таким id'];
         }
+        return ['result' => 'Заказ успешно удален из корзины'];
     }
 
-    public function actionGet_Phones()
+    public function actionGet_phones()
     {
         $basket = $this->getBasket();
         if ($basket !== null)
+            //return $basket->getPhoneBaskets()->all();
+            //return $basket->getPhones()->all();
             return $basket->getPhones();
         else
             return [];

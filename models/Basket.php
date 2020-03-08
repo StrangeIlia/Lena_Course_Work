@@ -3,6 +3,7 @@
 namespace app\models;
 
 use yii\db\ActiveQuery;
+use yii\db\ActiveRecord;
 
 /**
  * This is the model class for table "Baskets".
@@ -34,7 +35,7 @@ class Basket extends BaseActiveRecord
             [['user_id', 'created_at', 'updated_at'], 'required'],
             [['user_id'], 'integer'],
             [['created_at', 'updated_at'], 'safe'],
-            [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => Users::className(), 'targetAttribute' => ['user_id' => 'id']],
+            [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::className(), 'targetAttribute' => ['user_id' => 'id']],
         ];
     }
 
@@ -58,7 +59,7 @@ class Basket extends BaseActiveRecord
      */
     public function getUser()
     {
-        return $this->hasOne(Users::className(), ['id' => 'user_id']);
+        return $this->hasOne(User::className(), ['id' => 'user_id']);
     }
 
     /**
@@ -68,17 +69,36 @@ class Basket extends BaseActiveRecord
      */
     public function getPhoneBaskets()
     {
-        return $this->hasMany(PhoneBaskets::className(), ['basket_id' => 'id']);
+        return $this->hasMany(PhoneBasket::className(), ['basket_id' => 'id']);
     }
 
+    /**
+     * Gets query for [PhoneBasket].
+     *
+     * @return array|ActiveRecord
+     */
     public function getPhoneBasket($phone_id)
     {
-        return $this->hasOne(PhoneBaskets::className(), ['basket_id' => 'id', 'phone_id' => $phone_id]);
+        return $this->hasOne(PhoneBasket::className(), ['basket_id' => 'id'])->where(['phone_id' => $phone_id])->one();
     }
 
     public function getPhones()
     {
-        return $this->hasMany(Phone::className(), ['id' => 'phone_id'])
-            ->viaTable(PhoneBasket::tableName(), ['basket_id' => 'id']);
+        $phone_baskets = $this->getPhoneBaskets();
+        $tmp_massive = [];
+        foreach ($phone_baskets->all() as $phone_basket) {
+            $phone = null;
+            if (!key_exists($phone_basket['phone_id'], $tmp_massive)) {
+                $phone = Phone::findOne($phone_basket['phone_id']);
+                $phone->count = 1;
+                $tmp_massive[$phone_basket['phone_id']] = $phone;
+            } else $tmp_massive[$phone_basket['phone_id']]->count += 1;
+        }
+        $result = [];
+        foreach ($tmp_massive as $phone)
+            $result[] = $phone;
+        return $result;
+//        return $this->hasMany(Phone::className(), ['id' => 'phone_id'])
+//            ->viaTable(PhoneBasket::tableName(), ['basket_id' => 'id']);
     }
 }

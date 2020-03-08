@@ -15,8 +15,7 @@ use yii\db\ActiveQuery;
  * @property string $created_at
  * @property string $updated_at
  *
- * @property PhoneContainers[] $phoneContainers
- * @property Container[] $containers
+ * @property PhoneBasket[] $phoneBaskets
  */
 class Phone extends BaseActiveRecord
 {
@@ -39,7 +38,7 @@ class Phone extends BaseActiveRecord
             [['count'], 'integer'],
             [['created_at', 'updated_at'], 'safe'],
             [['mark'], 'string', 'max' => 30],
-            [['preview'], 'string', 'max' => 100],
+            [['preview'], 'string', 'max' => 256],
         ];
     }
 
@@ -60,22 +59,12 @@ class Phone extends BaseActiveRecord
     }
 
     /**
-     * Gets query for [[PhoneContainers]].
+     * Gets query for [[PhoneBaskets]].
      *
      * @return ActiveQuery
      */
-    public function getPhoneContainers()
+    public function getPhoneBaskets()
     {
-        return $this->hasMany(PhoneContainers::className(), ['phone_id' => 'id']);
-    }
-
-    /**
-     * Gets query for [[Containers]].
-     *
-     * @return ActiveQuery
-     */
-    public function getContainers()
-    {
-        return $this->hasMany(Container::className(), ['id' => 'container_id'])->viaTable('PhoneContainers', ['phone_id' => 'id']);
+        return $this->hasMany(PhoneBasket::className(), ['phone_id' => 'id']);
     }
 }
