@@ -2,73 +2,94 @@
 
 namespace app\models;
 
-class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
+use Yii;
+use yii\base\Exception;
+use yii\web\IdentityInterface;
+
+/**
+ * This is the model class for table "Users".
+ *
+ * @property int $id
+ * @property string $username
+ * @property string $email
+ * @property string $password
+ * @property string $access_token
+ * @property float $score Счет клиента
+ * @property string $created_at
+ * @property string $updated_at
+ *
+ * @property Baskets[] $baskets
+ */
+class User extends BaseActiveRecord implements IdentityInterface
 {
-    public $id;
-    public $username;
-    public $password;
-    public $authKey;
-    public $accessToken;
-
-    private static $users = [
-        '100' => [
-            'id' => '100',
-            'username' => 'admin',
-            'password' => 'admin',
-            'authKey' => 'test100key',
-            'accessToken' => '100-token',
-        ],
-        '101' => [
-            'id' => '101',
-            'username' => 'demo',
-            'password' => 'demo',
-            'authKey' => 'test101key',
-            'accessToken' => '101-token',
-        ],
-    ];
-
+    /**
+     * {@inheritdoc}
+     */
+    public static function tableName()
+    {
+        return 'Users';
+    }
 
     /**
      * {@inheritdoc}
+     */
+    public function rules()
+    {
+        return [
+            [['username', 'email', 'password', 'access_token', 'score', 'created_at', 'updated_at'], 'required'],
+            [['score'], 'number'],
+            [['created_at', 'updated_at'], 'safe'],
+            [['username', 'email', 'password'], 'string', 'max' => 30],
+            [['access_token'], 'string', 'max' => 50],
+        ];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function attributeLabels()
+    {
+        return [
+            'id' => 'ID',
+            'username' => 'Username',
+            'email' => 'Email',
+            'password' => 'Password',
+            'access_token' => 'Access Token',
+            'score' => 'Score',
+            'created_at' => 'Created At',
+            'updated_at' => 'Updated At',
+        ];
+    }
+
+
+    /**
+     * Gets query for [[Baskets]].
+     *
+     * @return Baskets array
+     */
+    public function getBaskets()
+    {
+        return $this->hasMany(Baskets::className(), ['user_id' => 'id']);
+    }
+
+    /**
+     * @inheritDoc
      */
     public static function findIdentity($id)
     {
-        return isset(self::$users[$id]) ? new static(self::$users[$id]) : null;
+        return static::findOne($id);
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritDoc
      */
     public static function findIdentityByAccessToken($token, $type = null)
     {
-        foreach (self::$users as $user) {
-            if ($user['accessToken'] === $token) {
-                return new static($user);
-            }
-        }
-
-        return null;
+        return static::findOne(["access_token" => $token]);
     }
 
     /**
-     * Finds user by username
-     *
-     * @param string $username
-     * @return static|null
-     */
-    public static function findByUsername($username)
-    {
-        foreach (self::$users as $user) {
-            if (strcasecmp($user['username'], $username) === 0) {
-                return new static($user);
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * {@inheritdoc}
+     * @inheritDoc
      */
     public function getId()
     {
@@ -76,29 +97,65 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritDoc
      */
     public function getAuthKey()
     {
-        return $this->authKey;
+        return null;
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritDoc
      */
     public function validateAuthKey($authKey)
     {
-        return $this->authKey === $authKey;
+        return false;
+    }
+
+
+    public static function findByUsername($username)
+    {
+        return static::findOne(['username' => $username]);
+    }
+
+
+    public function validatePassword($password)
+    {
+        return $this->password == $password;
+    }
+
+    public static function getMinLengthPassword()
+    {
+        return 8;
+    }
+
+    public function checkPasswordLength()
+    {
+        return strlen($this->password) >= static::getMinLengthPassword();
+    }
+
+    public function generateAccessToken()
+    {
+        $this->access_token = Yii::$app->security->generateRandomString();
     }
 
     /**
-     * Validates password
-     *
-     * @param string $password password to validate
-     * @return bool if password provided is valid for current user
+     * Выдача токена и ключа авторизации
+     * @param $insert
+     * @return bool
+     * @throws Exception
      */
-    public function validatePassword($password)
+    public function beforeSave($insert)
     {
-        return $this->password === $password;
+        if (!parent::beforeSave($insert)) {
+            return false;
+        }
+        if ($insert) {
+            if ($this->checkPasswordLength()) {
+                $this->generateAccessToken();
+                return true;
+            } else return false;
+        }
+        return true;
     }
 }
