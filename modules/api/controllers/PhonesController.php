@@ -7,6 +7,8 @@ namespace app\modules\api\controllers;
 use app\models\Phone;
 use Yii;
 use yii\filters\AccessControl;
+use yii\helpers\FileHelper;
+use yii\web\UploadedFile;
 
 class PhonesController extends BaseActiveController
 {
@@ -15,8 +17,6 @@ class PhonesController extends BaseActiveController
     public function behaviors()
     {
         $behaviors = parent::behaviors();
-
-        $behaviors['bearerAuth']['optional'] = ['index', 'view'];
 
         $behaviors['access'] = [
             'class' => AccessControl::className(),
@@ -49,12 +49,16 @@ class PhonesController extends BaseActiveController
         $phone = new Phone();
         if ($phone->load(Yii::$app->request->post(), '')) {
             if (isset($_FILES['preview'])) {
+                return true;
                 $file = UploadedFile::getInstancesByName('preview')[0];
                 $date = date('Y/m/d');
                 $dir = 'uploads/videos/' . $date;
                 FileHelper::createDirectory($dir);
                 $phone->preview = $dir . '/' . md5($file->baseName . time()) . '.' . $file->extension;
-                return $phone->save(false);
+                if ($phone->save(false))
+                    return true;
+                else
+                    return false;
             }
         } else
             return false;

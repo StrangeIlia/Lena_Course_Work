@@ -14,9 +14,6 @@ class UsersController extends BaseController
     public function behaviors()
     {
         $behaviors = parent::behaviors();
-
-        $behaviors['bearerAuth']['optional'] = ['registration', 'login', 'username'];
-
         $behaviors['access'] = [
             'class' => AccessControl::className(),
             'rules' => [
