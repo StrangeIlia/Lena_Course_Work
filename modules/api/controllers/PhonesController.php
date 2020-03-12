@@ -49,19 +49,17 @@ class PhonesController extends BaseActiveController
         $phone = new Phone();
         if ($phone->load(Yii::$app->request->post(), '')) {
             if (isset($_FILES['preview'])) {
-                return true;
                 $file = UploadedFile::getInstancesByName('preview')[0];
                 $date = date('Y/m/d');
-                $dir = 'uploads/videos/' . $date;
-                FileHelper::createDirectory($dir);
+                $dir = 'uploads/preview/' . $date;
+                //mkdir($dir, 777, true);
+                FileHelper::createDirectory($dir, 777, true);
                 $phone->preview = $dir . '/' . md5($file->baseName . time()) . '.' . $file->extension;
-                if ($phone->save(false))
-                    return true;
-                else
-                    return false;
+                rename($file->tempName, $phone->preview);
+                return $phone->save(false);
             }
-        } else
-            return false;
+        }
+        return false;
     }
 
     public function actionPurchase($phoneId)
