@@ -23,12 +23,12 @@ class UsersController extends BaseController
                 [
                     'actions' => ['registration', 'login', 'username'],
                     'allow' => true,
-                    'roles' => ['@', '?'],
+                    'roles' => ['?'],
                 ],
                 [
                     'actions' => ['logout', 'refill'],
                     'allow' => true,
-                    'roles' => ['@'],
+                    'roles' => ['?'],
                 ],
             ],
         ];

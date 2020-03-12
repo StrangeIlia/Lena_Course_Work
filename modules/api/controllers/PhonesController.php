@@ -24,12 +24,12 @@ class PhonesController extends BaseActiveController
                 [
                     'actions' => ['create', 'update', 'delete', 'purchase'],
                     'allow' => true,
-                    'roles' => ['@'],
+                    'roles' => ['?'],
                 ],
                 [
                     'actions' => ['index', 'view'],
                     'allow' => true,
-                    'roles' => ['@', '?'],
+                    'roles' => ['?'],
                 ],
             ],
         ];

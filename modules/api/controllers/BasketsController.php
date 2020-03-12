@@ -22,7 +22,7 @@ class BasketsController extends BaseController
                 [
                     'actions' => ['purchase', 'append_phone', 'remove_phone', 'get_phones'],
                     'allow' => true,
-                    'roles' => ['@'],
+                    'roles' => ['?'],
                 ],
             ],
         ];

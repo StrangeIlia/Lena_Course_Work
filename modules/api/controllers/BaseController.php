@@ -2,7 +2,6 @@
 
 namespace app\modules\api\controllers;
 
-use yii\filters\auth\HttpBearerAuth;
 use yii\filters\ContentNegotiator;
 use yii\filters\Cors;
 use yii\filters\RateLimiter;
@@ -32,9 +31,6 @@ class BaseController extends Controller
             'cors' => [
                 'class' => Cors::classname()
             ],
-            'bearerAuth' => [
-                'class' => HttpBearerAuth::className(),
-            ]
         ];
     }
 }
