@@ -6,7 +6,7 @@ services:
       - ~/.composer-docker/cache:/root/.composer/cache:delegated
       - ./:/app:delegated
     ports:
-      - '8000:80'
+      - '50001:80'
 
   mysql:
     image: mysql:8.0

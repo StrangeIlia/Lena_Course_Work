@@ -2,6 +2,7 @@
 
 namespace app\models;
 
+use Yii;
 use yii\db\ActiveQuery;
 
 /**
@@ -66,5 +67,12 @@ class Phone extends BaseActiveRecord
     public function getPhoneBaskets()
     {
         return $this->hasMany(PhoneBasket::className(), ['phone_id' => 'id']);
+    }
+
+    public function toArray(array $fields = [], array $expand = [], $recursive = true)
+    {
+        $data = parent::toArray($fields, $expand, $recursive);
+        $data['preview'] = Yii::$app->urlManager->hostInfo . '/' . $data['preview'];
+        return $data;
     }
 }
